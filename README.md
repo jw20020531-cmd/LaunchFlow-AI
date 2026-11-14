@@ -2,6 +2,8 @@
 
 LaunchFlow helps web agencies collect website copy, review an exact revision and record the client's decision. It includes a checklist, version history, revocable client links and a status note you can copy to your existing communication channel.
 
+[Try the public interactive demo](https://jw20020531-cmd.github.io/LaunchFlow-AI/). Switch between agency and client views to try submission, revision, and approval on a sample request. The demo saves progress in your browser.
+
 ## Run locally with Docker Compose
 
 Requires Docker with Compose v2. In PowerShell, from the repository root:
@@ -29,3 +31,4 @@ From `api/`, install `requirements.txt` in an isolated environment and run `pyth
 From `web/`, run `npm ci`, `npm run typecheck` and `npm run build`. To run the browser flow against a local stack, provision a synthetic owner, install Playwright Chromium (`npx playwright install chromium`), set `LAUNCHFLOW_TEST_EMAIL` and `LAUNCHFLOW_TEST_PASSWORD` for that owner, and run `npx playwright test`. Set `PLAYWRIGHT_CHANNEL=msedge` to use installed Edge instead.
 
 See [operations](docs/operations.md) before using real client data and the [pilot runbook](docs/pilot-runbook.md) to evaluate the workflow.
+

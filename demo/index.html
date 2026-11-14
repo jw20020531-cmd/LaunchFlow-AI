@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Try LaunchFlow AI's website copy submission and approval workflow with a sample project.">
+<title>LaunchFlow AI · Interactive demo</title>
+<style>
+:root{color-scheme:light;--ink:#172a24;--muted:#53665c;--line:#ceddd3;--green:#174936;--wash:#edf4ee;--paper:#fff}*{box-sizing:border-box}body{margin:0;background:#f5f7f1;font:16px/1.55 system-ui,sans-serif;color:var(--ink)}header{border-bottom:1px solid var(--line);background:var(--paper)}.wrap{width:min(1080px,calc(100% - 32px));margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0}.brand{display:flex;align-items:center;gap:10px;font-weight:750}.mark{background:var(--green);color:white;border-radius:9px;padding:3px 10px}a{color:var(--green)}main{padding:44px 0}.hero{margin-bottom:24px}.eyebrow{font-size:.78rem;text-transform:uppercase;letter-spacing:.12em;font-weight:750;color:var(--green)}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(2rem,5vw,3.3rem);line-height:1.04;letter-spacing:-.05em;margin:.4rem 0 .8rem}h2{font-size:1.25rem;margin-bottom:.45rem}.muted{color:var(--muted)}.note{font-size:.88rem}.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;align-items:start}.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px}.toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 14px}.badge{background:var(--wash);color:var(--green);border-radius:999px;padding:4px 10px;font-size:.82rem;font-weight:720}.heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.primary{background:var(--green);color:white;border-color:var(--green)}button{background:white;color:var(--ink);font:inherit;font-size:.9rem;font-weight:650;border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}button[aria-pressed=true]{background:var(--green);color:white}button:disabled{opacity:.55;cursor:not-allowed}button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid #3f9473;outline-offset:2px}label{display:block;font-weight:650;margin-top:12px}textarea{width:100%;min-height:112px;margin:5px 0 8px;padding:10px;border:1px solid #9eb1a4;border-radius:8px;resize:vertical;font:inherit}.copy{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--wash);border-radius:8px;padding:12px}.error{color:#9b3228}.entry{border-top:1px solid var(--line);padding:10px 0;font-size:.88rem;overflow-wrap:anywhere}.entry:last-child{padding-bottom:0}footer{border-top:1px solid var(--line);padding:16px 0;color:var(--muted);font-size:.88rem}@media(max-width:720px){.grid{grid-template-columns:1fr} main{padding:28px 0}.card{padding:15px}}
+</style>
+<header><div class="wrap top"><div class="brand"><span class="mark" aria-hidden="true">L</span>LaunchFlow AI</div><a href="https://github.com/jw20020531-cmd/LaunchFlow-AI">View source on GitHub</a></div></header>
+<main class="wrap">
+  <div class="hero"><span class="eyebrow">Interactive sandbox</span><h1>Get website copy approved.</h1><p class="muted">Try both sides of a content request for a sample website project.</p><p class="muted note">This demo uses synthetic data stored in your browser. Use sample copy only.</p></div>
+  <div class="toolbar" aria-label="Demo role"><button id="agency" type="button" aria-pressed="false">Agency view</button><button id="client" type="button" aria-pressed="true">Client view</button><button id="reset" type="button">Reset demo</button></div>
+  <div class="grid">
+    <section class="card" aria-label="Content request"><div class="heading"><div><span class="eyebrow">Sample project</span><h2>Northstar Studio website</h2></div><span class="badge" id="readiness"></span></div>
+      <h3>Homepage headline</h3><p class="muted">Write a short headline that describes Northstar Studio's design work.</p><div id="workflow"></div>
+      <p id="status" class="note muted" role="status"></p></section>
+    <aside class="card"><h2>Activity</h2><p class="muted note">A record of submissions, shared versions and client decisions.</p><div id="history"></div></aside>
+  </div>
+</main>
+<footer><div class="wrap">LaunchFlow AI · Website content requests and approvals</div></footer>
+<script>
+'use strict';
+const key = 'launchflow-demo-v1';
+const fresh = () => ({status:'awaiting', revisions:[], shared:null, history:[]});
+const labels = {awaiting:'Awaiting client copy', submitted:'Ready for agency review', review:'Awaiting client approval', changes:'Changes requested', approved:'Approved'};
+let state = fresh();
+try { const saved=JSON.parse(localStorage.getItem(key)); if(saved && labels[saved.status] && Array.isArray(saved.revisions) && Array.isArray(saved.history)) state=saved; } catch {}
+let role = 'client';
+const byId = id => document.getElementById(id);
+const panel = byId('workflow');
+function node(tag,text,cls) {
+  const el=document.createElement(tag);
+  el.textContent=text;
+  if(cls) el.className=cls;
+  return el;
+}
+function mark(message) {
+  state.history.unshift(message);
+  try { localStorage.setItem(key,JSON.stringify(state)); } catch {}
+  render();
+  byId('status').textContent=message;
+}
+function button(label,handler,primary=false) {
+  const element=node('button',label,primary?'primary':'');
+  element.type='button';
+  element.addEventListener('click',handler);
+  return element;
+}
+function field(label,value='',max=2000) {
+  const wrapper=node('label',label);
+  const input=node('textarea','');
+  input.value=value;
+  input.maxLength=max;
+  wrapper.append(input);
+  panel.append(wrapper);
+  return input;
+}
+function addRevision(copy,author) {
+  const id=state.revisions.length+1;
+  state.revisions.push({id,copy,author});
+  state.shared=null;
+  state.status='submitted';
+  mark(author+' saved version '+id+'.');
+}
+function error(message,input) {
+  byId('status').textContent=message;
+  input.focus();
+}
+function render() {
+  for(const item of ['agency','client']) byId(item).setAttribute('aria-pressed',String(item===role));
+  byId('readiness').textContent=state.status==='approved' ? '1 / 1 approved' : '0 / 1 approved';
+  panel.replaceChildren(node('p',labels[state.status],'badge'));
+  const rows=byId('history');
+  rows.replaceChildren();
+  for(const entry of state.history) rows.append(node('div',entry,'entry'));
+  if(!state.history.length) rows.append(node('p','No activity yet.','muted note'));
+  const latest=state.revisions.at(-1);
+  const shared=state.revisions.find(x=>x.id===state.shared);
+  if(state.status==='approved') {
+    panel.append(node('p','Approved version '+shared.id,'note'),node('p',shared.copy,'copy'));
+    if(role==='agency') panel.append(button('Reopen request',()=>{state.status='submitted';state.shared=null;mark('Agency reopened the request.');}));
+    return;
+  }
+  if(state.status==='review') {
+    panel.append(node('p','Shared version '+shared.id,'note'),node('p',shared.copy,'copy'));
+    if(role==='agency') {
+      panel.append(button('Withdraw review',()=>{state.status='submitted';state.shared=null;mark('Agency withdrew version '+shared.id+' from review.');}));
+    } else {
+      const notes=field('What should change? (required when requesting changes)');
+      const actions=node('div','','toolbar');
+      actions.append(button('Approve version '+shared.id,()=>{state.status='approved';mark('Client approved version '+shared.id+'.');},true),
+        button('Request changes',()=>{const value=notes.value.trim();if(!value){error('Add a change note first.',notes);return;}state.status='changes';mark('Client requested changes to version '+shared.id+': '+value);}));
+      panel.append(actions);
+    }
+    return;
+  }
+  if(role==='client') {
+    if(state.status==='submitted') { panel.append(node('p','The agency is preparing a version for your review.','muted')); return; }
+    const input=field('Website copy',state.revisions.filter(x=>x.author==='Client').at(-1)?.copy ?? 'Thoughtful websites for brands ready to grow.',12000);
+    panel.append(button('Submit content',()=>{const copy=input.value.trim();if(!copy){error('Enter some copy first.',input);return;}addRevision(copy,'Client');},true));
+    return;
+  }
+  if(!latest) { panel.append(node('p','Switch to Client view to submit the sample headline.','muted'));return; }
+  const input=field('Edit the latest copy',latest.copy,12000);
+  const actions=node('div','','toolbar');
+  actions.append(button('Save revision',()=>{const copy=input.value.trim();if(!copy){error('Enter some copy first.',input);return;}addRevision(copy,'Agency');}),button('Share saved version '+latest.id,()=>{
+    if(input.value.trim()!==latest.copy){error('Save your edits before sharing.',input);return;}
+    state.shared=latest.id;state.status='review';mark('Agency shared version '+latest.id+' for client approval.');
+  },true));
+  panel.append(actions);
+}
+for(const item of ['agency','client']) byId(item).addEventListener('click',()=>{role=item;byId('status').textContent='';render();});
+byId('reset').addEventListener('click',()=>{state=fresh();role='client';try{localStorage.removeItem(key);}catch{} render();byId('status').textContent='Demo reset.';});
+render();
+</script>
+</html>
+
